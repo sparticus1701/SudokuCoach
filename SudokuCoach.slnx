@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SudokuCoach.App/SudokuCoach.App.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="src/SudokuCoach.Core/SudokuCoach.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SudokuCoach.Core.Tests/SudokuCoach.Core.Tests.csproj" />
+  </Folder>
+</Solution>

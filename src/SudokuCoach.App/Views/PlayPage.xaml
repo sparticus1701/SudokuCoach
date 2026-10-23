@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SudokuCoach.ViewModels"
+             x:Class="SudokuCoach.Views.PlayPage"
+             x:DataType="vm:PlayViewModel"
+             Title="Play">
+
+    <ScrollView>
+        <VerticalStackLayout x:Name="Root"
+                             HorizontalOptions="Center"
+                             Padding="16,12,16,16"
+                             Spacing="12">
+
+            <!-- Header: new game, title + timer, fill notes -->
+            <Grid ColumnDefinitions="Auto,*,Auto" HeightRequest="48">
+                <Button Text="New"
+                        Clicked="OnNewGameClicked"
+                        SemanticProperties.Hint="Start a new puzzle" />
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="{Binding Title}" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" />
+                    <Label Text="{Binding ElapsedText}" FontSize="13" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+                <Button Grid.Column="2"
+                        Text="Fill notes"
+                        Command="{Binding FillNotesCommand}"
+                        SemanticProperties.Hint="Pencil in every possible digit" />
+            </Grid>
+
+            <!-- Board -->
+            <GraphicsView x:Name="BoardView"
+                          SemanticProperties.Description="Sudoku board" />
+
+            <!-- Coach panel -->
+            <Border BackgroundColor="{StaticResource Surface}"
+                    Stroke="{StaticResource Line}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    Padding="12">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="COACH"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               CharacterSpacing="0.5"
+                               TextColor="{StaticResource Muted}"
+                               VerticalOptions="Center" />
+                        <Border Grid.Column="1"
+                                BackgroundColor="{StaticResource Track}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="3">
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="2">
+                                <Button Text="Show" Style="{StaticResource SegmentButton}" Command="{Binding ShowCoachCommand}">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding CoachVisible}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+                                            <Setter Property="TextColor" Value="{StaticResource Ink}" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                                <Button Grid.Column="1" Text="Hide" Style="{StaticResource SegmentButton}" Command="{Binding HideCoachCommand}">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding CoachHidden}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+                                            <Setter Property="TextColor" Value="{StaticResource Ink}" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Hidden -->
+                    <VerticalStackLayout IsVisible="{Binding CoachHidden}" Spacing="4" Padding="24,8">
+                        <Label Text="Coach hidden" FontSize="15" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="Play it straight. Tap Show whenever you want to see what's on the board."
+                               FontSize="13"
+                               TextColor="{StaticResource Muted}"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <!-- Shown -->
+                    <VerticalStackLayout IsVisible="{Binding CoachVisible}" Spacing="6">
+                        <Label Text="{Binding CoachIntro}" FontSize="13" TextColor="{StaticResource Muted}" />
+
+                        <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding CoachRows}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CoachRow">
+                                    <ContentView FlexLayout.Basis="50%" Padding="0,0,6,6">
+                                    <Border Padding="12,0"
+                                            MinimumHeightRequest="44"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 10"
+                                            BackgroundColor="{StaticResource Ground}">
+                                        <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                                            <Label Text="{Binding Name}" FontSize="14" VerticalOptions="Center">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsInactive}" Value="True">
+                                                        <Setter Property="TextColor" Value="{StaticResource Muted}" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                            <Border Grid.Column="1"
+                                                    IsVisible="{Binding IsActive}"
+                                                    BackgroundColor="{StaticResource Accent}"
+                                                    StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 12"
+                                                    MinimumWidthRequest="24"
+                                                    HeightRequest="24"
+                                                    Padding="7,0">
+                                                <Label Text="{Binding Count}"
+                                                       TextColor="White"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center" />
+                                            </Border>
+                                            <Label Grid.Column="1"
+                                                   IsVisible="{Binding IsInactive}"
+                                                   Text="0"
+                                                   FontSize="13"
+                                                   TextColor="{StaticResource Muted}"
+                                                   VerticalOptions="Center" />
+                                        </Grid>
+                                    </Border>
+                                    </ContentView>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+
+                        <Border IsVisible="{Binding HasNewToYou}"
+                                BackgroundColor="{StaticResource WarmTint}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="12,0"
+                                MinimumHeightRequest="44"
+                                SemanticProperties.Hint="Opens a short lesson">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding LearnCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
+                                <Label Text="{Binding NewToYouText}" TextColor="{StaticResource WarmInk}" VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding LearnText}"
+                                       TextColor="{StaticResource WarmInk}"
+                                       FontAttributes="Bold"
+                                       FontSize="13"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Keypad: digits 1–9 with how many are left, plus Notes, Erase, Undo -->
+            <Grid ColumnDefinitions="*,*,*,*,*,*" RowDefinitions="52,52" ColumnSpacing="6" RowSpacing="6">
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KeyBorder}" SemanticProperties.Description="1">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="1" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="1" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[0].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KeyBorder}" SemanticProperties.Description="2">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="2" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="2" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[1].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource KeyBorder}" SemanticProperties.Description="3">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="3" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="3" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[2].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource KeyBorder}" SemanticProperties.Description="4">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="4" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="4" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[3].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource KeyBorder}" SemanticProperties.Description="5">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="5" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="5" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[4].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Button Grid.Row="0" Grid.Column="5"
+                        Text="Notes"
+                        FontSize="12"
+                        Padding="0"
+                        Command="{Binding NotesCommand}"
+                        SemanticProperties.Hint="Toggle pencil marks">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding NotesMode}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{StaticResource Ink}" />
+                            <Setter Property="TextColor" Value="White" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KeyBorder}" SemanticProperties.Description="6">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="6" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="6" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[5].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource KeyBorder}" SemanticProperties.Description="7">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="7" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="7" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[6].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource KeyBorder}" SemanticProperties.Description="8">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="8" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="8" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[7].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource KeyBorder}" SemanticProperties.Description="9">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding DigitCommand}" CommandParameter="9" /></Border.GestureRecognizers>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="9" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="{Binding Keys[8].Remaining}" FontSize="11" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Button Grid.Row="1" Grid.Column="4" Text="Erase" FontSize="12" Padding="0" Command="{Binding EraseCommand}" />
+                <Button Grid.Row="1" Grid.Column="5" Text="Undo" FontSize="12" Padding="0" Command="{Binding UndoCommand}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

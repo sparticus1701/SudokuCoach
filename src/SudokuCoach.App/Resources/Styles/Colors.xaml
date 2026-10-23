@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Palette from the concept mockups. Blue = the player and the coach; orange = attention. -->
+    <Color x:Key="Ink">#14202E</Color>
+    <Color x:Key="Muted">#4B5768</Color>
+    <Color x:Key="Ground">#F3F5F8</Color>
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <Color x:Key="Line">#D5DCE5</Color>
+    <Color x:Key="Track">#E6EAF0</Color>
+    <Color x:Key="Accent">#2563EB</Color>
+    <Color x:Key="AccentTint">#DBE7FE</Color>
+    <Color x:Key="Warm">#C2410C</Color>
+    <Color x:Key="WarmTint">#FFF1E6</Color>
+    <Color x:Key="WarmInk">#9A3412</Color>
+
+</ResourceDictionary>
