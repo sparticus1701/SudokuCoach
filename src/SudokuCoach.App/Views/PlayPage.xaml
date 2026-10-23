@@ -12,8 +12,8 @@
                              Padding="16,12,16,16"
                              Spacing="12">
 
-            <!-- Header: new game, title + timer, fill notes -->
-            <Grid ColumnDefinitions="Auto,*,Auto" HeightRequest="48">
+            <!-- Header: new game, title + timer, hint, fill notes -->
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6" HeightRequest="48">
                 <Button Text="New"
                         Clicked="OnNewGameClicked"
                         SemanticProperties.Hint="Start a new puzzle" />
@@ -22,6 +22,10 @@
                     <Label Text="{Binding ElapsedText}" FontSize="13" TextColor="{StaticResource Muted}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
                 <Button Grid.Column="2"
+                        Text="Hint"
+                        Command="{Binding HintCommand}"
+                        SemanticProperties.Hint="Get a hint, a little at a time" />
+                <Button Grid.Column="3"
                         Text="Fill notes"
                         Command="{Binding FillNotesCommand}"
                         SemanticProperties.Hint="Pencil in every possible digit" />
@@ -30,6 +34,36 @@
             <!-- Board -->
             <GraphicsView x:Name="BoardView"
                           SemanticProperties.Description="Sudoku board" />
+
+            <!-- Hint: one step at a time, with the board highlighting what the text describes -->
+            <Border IsVisible="{Binding HasHint}"
+                    BackgroundColor="{StaticResource Surface}"
+                    Stroke="{StaticResource Accent}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    Padding="12">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="{Binding HintStepText}"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               CharacterSpacing="0.5"
+                               TextColor="{StaticResource Accent}"
+                               VerticalOptions="Center" />
+                        <Button Grid.Column="1"
+                                Text="Close"
+                                Style="{StaticResource SegmentButton}"
+                                Command="{Binding CloseHintCommand}"
+                                SemanticProperties.Hint="Dismiss the hint" />
+                    </Grid>
+                    <Label Text="{Binding HintText}" FontSize="15" />
+                    <Button Text="Show more"
+                            IsVisible="{Binding HintHasMore}"
+                            Command="{Binding HintCommand}"
+                            HorizontalOptions="Start"
+                            SemanticProperties.Hint="Reveal the next step of the hint" />
+                </VerticalStackLayout>
+            </Border>
 
             <!-- Coach panel -->
             <Border BackgroundColor="{StaticResource Surface}"

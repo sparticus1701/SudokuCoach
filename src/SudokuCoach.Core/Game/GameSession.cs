@@ -37,6 +37,12 @@ public sealed class GameSession
 
     public bool IsSolved => Board.IsSolved;
 
+    /// <summary>The hint on screen, if any. Survives edits as long as the hinted move still holds.</summary>
+    public Hint? CurrentHint { get; private set; }
+
+    /// <summary>How many times the player has asked for a hint or for more of one.</summary>
+    public int HintsUsed { get; private set; }
+
     public void Select(int? cell)
     {
         if (cell is < 0 or > 80)
@@ -91,7 +97,7 @@ public sealed class GameSession
                 }
             }
         }
-        OnChanged();
+        OnEdited();
         return true;
     }
 
@@ -109,7 +115,7 @@ public sealed class GameSession
         PushUndo();
         Board.Set(cell, 0);
         _notes[cell] = CandidateSet.Empty;
-        OnChanged();
+        OnEdited();
         return true;
     }
 
@@ -128,7 +134,7 @@ public sealed class GameSession
             }
         }
         _notes = notes;
-        OnChanged();
+        OnEdited();
         return true;
     }
 
@@ -137,7 +143,7 @@ public sealed class GameSession
     {
         PushUndo();
         _notes = Board.ComputeCandidates();
-        OnChanged();
+        OnEdited();
     }
 
     /// <summary>How many more of <paramref name="digit"/> the board needs.</summary>
@@ -198,6 +204,69 @@ public sealed class GameSession
     }
 
     private void PushUndo() => _undo.Push((Board.ToArray(), (CandidateSet[])_notes.Clone()));
+
+    /// <summary>
+    /// Shows a hint, or reveals more of the current one. Mistakes come first: wrong digits, then
+    /// notes that rule out the answer. Otherwise the easiest move on the board, one level at a time.
+    /// </summary>
+    public Hint NextHint()
+    {
+        HintsUsed++;
+        CurrentHint = CurrentHint is { IsFinal: false } current ? current.Next() : FirstHint();
+        OnChanged();
+        return CurrentHint;
+    }
+
+    /// <summary>Dismisses the current hint.</summary>
+    public void ClearHint()
+    {
+        if (CurrentHint is null)
+        {
+            return;
+        }
+        CurrentHint = null;
+        OnChanged();
+    }
+
+    private Hint FirstHint()
+    {
+        var wrong = Enumerable.Range(0, 81).Where(IsWrong).ToArray();
+        if (wrong.Length > 0)
+        {
+            return Hint.WrongDigits(Board, wrong);
+        }
+        var noteErrors = NoteErrors();
+        if (noteErrors.Count > 0)
+        {
+            return Hint.NoteErrors(noteErrors);
+        }
+        var move = Analyzer.FindEasiest(Board, CoachCandidates());
+        return move is null ? Hint.Stuck() : Hint.ForMove(move, HintLevel.Technique);
+    }
+
+    /// <summary>
+    /// After an edit, keeps a move hint if the same deduction is still on the board (so the player
+    /// can work on it), and drops it otherwise. Other hints describe a state that just changed, so they go.
+    /// </summary>
+    private void RevalidateHint()
+    {
+        if (CurrentHint is not { Kind: HintKind.Move, Move: { } move } hint)
+        {
+            CurrentHint = null;
+            return;
+        }
+        var same = Analyzer.FinderFor(move.Technique)
+            .Find(CleanBoard(), CoachCandidates())
+            .FirstOrDefault(m => m.EffectKey == move.EffectKey && m.PatternCells.SequenceEqual(move.PatternCells));
+        CurrentHint = same is null || IsSolved ? null : Hint.ForMove(same, hint.Level);
+    }
+
+    /// <summary>Raises <see cref="Changed"/> after an edit to digits or notes.</summary>
+    private void OnEdited()
+    {
+        RevalidateHint();
+        OnChanged();
+    }
 
     private void OnChanged() => Changed?.Invoke(this, EventArgs.Empty);
 }

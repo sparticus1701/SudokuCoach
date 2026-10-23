@@ -34,6 +34,10 @@ public sealed class PlayViewModel : ObservableObject
     private string _newToYouText = string.Empty;
     private string _learnText = string.Empty;
     private bool _notesMode;
+    private bool _hasHint;
+    private bool _hintHasMore;
+    private string _hintStepText = string.Empty;
+    private string _hintText = string.Empty;
 
     public PlayViewModel()
     {
@@ -46,6 +50,8 @@ public sealed class PlayViewModel : ObservableObject
         ShowCoachCommand = new Command(() => CoachVisible = true);
         HideCoachCommand = new Command(() => CoachVisible = false);
         LearnCommand = new Command(LearnNext);
+        HintCommand = new Command(() => Game?.NextHint());
+        CloseHintCommand = new Command(() => Game?.ClearHint());
     }
 
     /// <summary>Raised whenever the board needs redrawing.</summary>
@@ -115,6 +121,16 @@ public sealed class PlayViewModel : ObservableObject
         }
     }
 
+    public bool HasHint { get => _hasHint; private set => SetProperty(ref _hasHint, value); }
+
+    /// <summary>True while the hint has more to reveal ("Show more").</summary>
+    public bool HintHasMore { get => _hintHasMore; private set => SetProperty(ref _hintHasMore, value); }
+
+    /// <summary>"HINT 2 OF 4" for a move hint; "HINT" for a one-step one.</summary>
+    public string HintStepText { get => _hintStepText; private set => SetProperty(ref _hintStepText, value); }
+
+    public string HintText { get => _hintText; private set => SetProperty(ref _hintText, value); }
+
     public ICommand DigitCommand { get; }
 
     public ICommand NotesCommand { get; }
@@ -130,6 +146,10 @@ public sealed class PlayViewModel : ObservableObject
     public ICommand HideCoachCommand { get; }
 
     public ICommand LearnCommand { get; }
+
+    public ICommand HintCommand { get; }
+
+    public ICommand CloseHintCommand { get; }
 
     /// <summary>Selects a cell from a tap on the board.</summary>
     public void TapCell(int cell)
@@ -180,6 +200,7 @@ public sealed class PlayViewModel : ObservableObject
 
     private void RefreshAll()
     {
+        RefreshHint();
         if (Game is null)
         {
             return;
@@ -194,6 +215,17 @@ public sealed class PlayViewModel : ObservableObject
         }
         RefreshCoach();
         BoardChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RefreshHint()
+    {
+        var hint = Game?.CurrentHint;
+        HasHint = hint is not null;
+        HintHasMore = hint is { IsFinal: false };
+        HintText = hint?.Text ?? string.Empty;
+        HintStepText = hint is { Kind: HintKind.Move }
+            ? $"HINT {(int)hint.Level} OF {(int)HintLevel.Effect}"
+            : "HINT";
     }
 
     private void RefreshCoach()
